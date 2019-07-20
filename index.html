@@ -6,11 +6,24 @@
 </head>
 <body>
     <div id="sketch"></div>
+
+    <h2>Control</h2>
+    <div class="toggle_radio">
+        <input type="radio" checked class="toggle_option" id="first_toggle" name="toggle_option">
+        <input type="radio" class="toggle_option" id="second_toggle" name="toggle_option">
+        <input type="radio" disabled class="toggle_option" id="third_toggle" name="toggle_option">
+        <label for="first_toggle"><p>User</p></label>
+        <label for="second_toggle"><p>Program</p></label>
+        <label for="third_toggle"><p>AI</p></label>
+        <div class="toggle_option_slider"></div>
+    </div>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.9.0/p5.min.js"></script>
 
-    <script src="/static/main.js"></script>
+    <script src="/static/src/utils.js"></script>
+    <script src="/static/src/main.js"></script>
+    <script src="/static/src/game.js"></script>
 </body>
 </html>
