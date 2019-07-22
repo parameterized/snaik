@@ -10,8 +10,8 @@ html {
 
 
 html, body {
-    padding: 0;
     margin: 0;
+    padding: 0;
     overflow: hidden;
 }
 
@@ -22,8 +22,8 @@ canvas {
 
 
 h2 {
-    margin: 10px auto;
     width: fit-content;
+    margin: 10px auto;
     color: #525F4C;
     font-family: "Source Sans Pro";
 }
@@ -40,14 +40,14 @@ h2 {
     position: relative;
     height: 26px;
     width: 318px;
-  }
-  .toggle_radio > * {
+}
+.toggle_radio > * {
     float: left;
-  }
-  .toggle_radio input[type=radio]{
+}
+.toggle_radio input[type=radio]{
     display: none;
-  }
-  .toggle_radio label{
+}
+.toggle_radio label{
     font: 90%/1.618 "Source Sans Pro";
     color: rgba(255,255,255,.9);
     z-index: 0;
@@ -61,8 +61,8 @@ h2 {
     cursor: pointer;
     z-index: 1;
     text-align: center;
-  }
-  .toggle_option_slider{
+}
+.toggle_option_slider{
     width: 100px;
     height: 20px;
     position: absolute;
@@ -75,17 +75,24 @@ h2 {
     -o-transition: all .4s ease;
     -ms-transition: all .4s ease;
     transition: all .4s ease;
-  }
-  
-  #first_toggle:checked ~ .toggle_option_slider{
+}
+
+#first_toggle:checked ~ .toggle_option_slider{
     background: rgba(255,255,255,.3);
     left: 3px;
-  }
-  #second_toggle:checked ~ .toggle_option_slider{
+}
+#second_toggle:checked ~ .toggle_option_slider{
     background: rgba(255,255,255,.3);
     left: 109px;
-  }
-  #third_toggle:checked ~ .toggle_option_slider{
+}
+#third_toggle:checked ~ .toggle_option_slider{
     background: rgba(255,255,255,.3);
     left: 215px;
-  }
+}
+
+
+#preds {
+    width: 100px;
+    margin: 10px auto;
+    padding-left: 240px;
+}

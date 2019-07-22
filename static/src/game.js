@@ -16,6 +16,8 @@ function Game() {
     this.highscore = 0;
     this.gameover = false;
     this.stepNum = 0;
+    this.lastScoreStep = 0;
+    this.id = uuidv4();
 }
 
 Game.prototype.setApple = function() {
@@ -51,6 +53,8 @@ Game.prototype.resetSnake = function() {
     this.highscore = max(this.highscore, this.score);
     this.score = 0;
     this.stepNum = 0;
+    this.lastScoreStep = 0;
+    this.id = uuidv4();
 }
 
 Game.prototype.step = function() {
@@ -68,6 +72,7 @@ Game.prototype.step = function() {
         this.snake.body.push({x: x, y: y});
         this.score += 1;
         this.setApple();
+        this.lastScoreStep = this.stepNum;
     } else {
         if (this.snake.body.filter(seg => (seg.x === x && seg.y === y)).length !== 0) {
             this.gameOver = true;
@@ -82,4 +87,52 @@ Game.prototype.step = function() {
         }
     }
     this.stepNum += 1;
+}
+
+Game.prototype.getState = function() {
+    let grid = [];
+    for (let i=0; i < 40; i++) {
+        grid[i] = [];
+        for (let j=0; j < 30; j++) {
+            grid[i][j] = false;
+        }
+    }
+    for (let i in this.snake.body) {
+        let v = this.snake.body[i];
+        grid[v.x][v.y] = true;
+    }
+    let p1 = this.snake.body.slice(-1)[0];
+    let actions = [];
+    let simpleInput = new Array(8).fill(0);
+    if (p1.x + 1 >= 0 && p1.x + 1 < 40 && p1.y >= 0 && p1.y < 30 && !grid[p1.x + 1][p1.y]) {
+        actions.push('right');
+        simpleInput[0] = 1;
+    }
+    if (p1.x - 1 >= 0 && p1.x - 1 < 40 && p1.y >= 0 && p1.y < 30 && !grid[p1.x - 1][p1.y]) {
+        actions.push('left');
+        simpleInput[1] = 1;
+    }
+    if (p1.x >= 0 && p1.x < 40 && p1.y - 1 >= 0 && p1.y - 1 < 30 && !grid[p1.x][p1.y - 1]) {
+        actions.push('up');
+        simpleInput[2] = 1;
+    }
+    if (p1.x >= 0 && p1.x < 40 && p1.y + 1 >= 0 && p1.y + 1 < 30 && !grid[p1.x][p1.y + 1]) {
+        actions.push('down');
+        simpleInput[3] = 1;
+    }
+    let d1 = (Math.pow(p1.x + 1 - this.apple.x, 2) + Math.pow(p1.y - this.apple.y, 2));
+    let d2 = (Math.pow(p1.x - 1 - this.apple.x, 2) + Math.pow(p1.y - this.apple.y, 2));
+    let d3 = (Math.pow(p1.x - this.apple.x, 2) + Math.pow(p1.y - 1 - this.apple.y, 2));
+    let d4 = (Math.pow(p1.x - this.apple.x, 2) + Math.pow(p1.y + 1 - this.apple.y, 2));
+    let dmax = Math.max(d1, d2, d3, d4);
+    let dmin = Math.min(d1, d2, d3, d4);
+    simpleInput[4] = (d1 - dmin)/(dmax - dmin);
+    simpleInput[5] = (d2 - dmin)/(dmax - dmin);
+    simpleInput[6] = (d3 - dmin)/(dmax - dmin);
+    simpleInput[7] = (d4 - dmin)/(dmax - dmin);
+    return {
+        id: this.id, stepNum: this.stepNum, score: this.score,
+        grid: grid, head: p1, apple: this.apple, actions: actions,
+        simpleInput: simpleInput
+    };
 }

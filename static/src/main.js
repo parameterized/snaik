@@ -1,36 +1,67 @@
 
-var control = 'user';
-
-$(function() {
-    /*
-    var socket = io();
-    $('#testBtn').click(function() {
-        socket.emit('test', 'test');
-    });
-    socket.on('test2', function(data) {
-        alert('test2');
-    });
-    */
-
-    $('#first_toggle').click(function() {
-        control = 'user';
-        stepsPerSecond = 12;
-    });
-    $('#second_toggle').click(function() {
-        control = 'program';
-        stepsPerSecond = 120;
-    });
-    $('#third_toggle').click(function() {
-        control = 'ai';
-        stepsPerSecond = 120;
-    });
-});
-
 var ssx = 800, ssy = 600;
 
 var game;
 var timer = 0;
 var stepsPerSecond = 12;
+
+var control = 'user';
+var socket;
+var aiStateSent = false;
+var preds = {right: 0, left: 0, up: 0, down: 0};
+
+$(function() {
+    $('#first_toggle').click(function() {
+        control = 'user';
+        stepsPerSecond = 12;
+        timer = 0;
+        aiStateSent = false;
+    });
+    $('#second_toggle').click(function() {
+        control = 'program';
+        stepsPerSecond = 120;
+        timer = 0;
+        aiStateSent = false;
+    });
+    $('#third_toggle').click(function() {
+        control = 'ai';
+        stepsPerSecond = 240;
+        timer = 0;
+        aiStateSent = false;
+    });
+
+    socket = io();
+    socket.on('action', function(data) {
+        if (data.id === game.id) {
+            switch (data.dir) {
+                case 'right':
+                    game.snake.dir = game.sDirRight;
+                    break;
+                case 'left':
+                    game.snake.dir = game.sDirLeft;
+                    break;
+                case 'up':
+                    game.snake.dir = game.sDirUp;
+                    break;
+                case 'down':
+                    game.snake.dir = game.sDirDown;
+                    break;
+            }
+            game.step();
+            timer += 1/stepsPerSecond;
+            if (timer < 0 && !game.gameOver) {
+                socket.emit('predict', game.getState());
+            } else {
+                aiStateSent = false;
+            }
+            preds = data.preds;
+            $('#preds #right').text('Right: ' + parseFloat(preds.right).toFixed(2));
+            $('#preds #left').text('Left: ' + parseFloat(preds.left).toFixed(2));
+            $('#preds #up').text('Up: ' + parseFloat(preds.up).toFixed(2));
+            $('#preds #down').text('Down: ' + parseFloat(preds.down).toFixed(2));
+        }
+    });
+});
 
 function setup() {
     let canvas = createCanvas(ssx, ssy);
@@ -57,8 +88,7 @@ function setup() {
 function update() {
     let dt = min(1/frameRate(), 1/4);
     timer -= dt;
-    while (timer < 0 && !game.gameOver) {
-        timer += 1/stepsPerSecond;
+    while (timer < 0 && !game.gameOver && !aiStateSent) {
         if (control === 'program') {
             if (game.inputQueue.length !== 0) {
                 game.inputQueue = [];
@@ -96,63 +126,30 @@ function update() {
                 }
                 game.snake.dir = opts[dist.reduce((iMax, x, i, arr) => x < arr[iMax] ? i : iMax, 0)];
             }
-            /*
-            let adx = game.apple.x - p1.x;
-            let ady = game.apple.y - p1.y;
-            if (Math.abs(adx) > Math.abs(ady)) {
-                if (adx > 0) {
-                    game.snake.dir = game.sDirRight;
-                } else if (adx < 0) {
-                    game.snake.dir = game.sDirLeft;
-                }
-            } else {
-                if (ady > 0) {
-                    game.snake.dir = game.sDirDown;
-                } else if (ady < 0) {
-                    game.snake.dir = game.sDirUp;
-                }
-            }
-            let grid = [];
-            for (let i=0; i < 40; i++) {
-                grid[i] = [];
-                for (let j=0; j < 30; j++) {
-                    grid[i][j] = false;
-                }
-            }
-            for (let i in game.snake.body) {
-                let v = game.snake.body[i];
-                grid[v.x][v.y] = true;
-            }
-            let nx = p1.x + game.snake.dir.x;
-            let ny = p1.y + game.snake.dir.y;
-            if (nx < 0 || nx >= 40 || ny < 0 || ny >= 30 || grid[nx][ny]) {
-                let opts = [];
-                if (p1.x + 1 < 0 || p1.x + 1 >= 40 || p1.y < 0 || p1.y >= 30 || grid[p1.x + 1][p1.y]) {
-                    opts.push(game.sDirRight);
-                }
-                if (p1.x - 1 < 0 || p1.x - 1 >= 40 || p1.y < 0 || p1.y >= 30 || grid[p1.x - 1][p1.y]) {
-                    opts.push(game.sDirLeft);
-                }
-                if (p1.x < 0 || p1.x >= 40 || p1.y - 1 < 0 || p1.y - 1 >= 30 || grid[p1.x][p1.y - 1]) {
-                    opts.push(game.sDirUp);
-                }
-                if (p1.x < 0 || p1.x >= 40 || p1.y + 1 < 0 || p1.y + 1 >= 30 || grid[p1.x][p1.y + 1]) {
-                    opts.push(game.sDirDown);
-                }
-                let dist = [];
-                for (let i in opts) {
-                    let v = opts[i];
-                    dist.push(Math.pow(p1.x + v.x - game.apple.x, 2) + Math.pow(p1.y + v.y - game.apple.y, 2));
-                }
-            }
-            */
         }
-        game.step();
+        if (control === 'user' || control === 'program') {
+            game.step();
+            timer += 1/stepsPerSecond;
+        } else if (control === 'ai') {
+            socket.emit('predict', game.getState());
+            aiStateSent = true;
+        }
+    }
+    if (control === 'ai' && game.gameOver && !aiStateSent) {
+        socket.emit('gameOver', {id: game.id, timeout: false});
+        aiStateSent = true;
     }
     if ((control === 'program' || control === 'ai') && game.gameOver && timer < -1/2) {
         game.gameOver = false;
         game.resetSnake();
         timer = 0;
+        aiStateSent = false;
+    }
+    if (control === 'ai' && game.stepNum - game.lastScoreStep > 500) {
+        socket.emit('gameOver', {id: game.id, timeout: true});
+        game.resetSnake();
+        timer = 0;
+        aiStateSent = false;
     }
 }
 
